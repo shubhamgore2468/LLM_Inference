@@ -12,6 +12,8 @@ def pick_device():
 
 DEVICE, DTYPE = pick_device()
 
+print(DEVICE, DTYPE)
+
 model_name = "Qwen/Qwen2.5-0.5B-Instruct"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForCausalLM.from_pretrained(model_name, dtype=DTYPE).to(DEVICE)
