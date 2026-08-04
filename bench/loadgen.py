@@ -1,4 +1,6 @@
 import argparse, asyncio, json, random, time, httpx
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from metrics import HDR, row, summarize
 
 async def one(client, url, prompt, osl, out):
