@@ -3,11 +3,11 @@ from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from transformers import AutoTokenizer, AutoModelForCausalLM, TextIteratorStreamer
 
-def pick_device():
+def pick_device(force_fp32=False):
     if torch.cuda.is_available():
-        return "cuda", torch.float16
+        return "cuda", torch.float32 if force_fp32 else torch.float16
     if torch.backends.mps.is_available():
-        return "mps", torch.float16
+        return "mps", torch.float32 if force_fp32 else torch.float16
     return "cpu", torch.float32
 
 DEVICE, DTYPE = pick_device()

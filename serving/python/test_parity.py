@@ -13,7 +13,7 @@
 
 import argparse
 import torch
-
+from bench.server_hf import pick_device 
 from kvslab import KVSlab
 from loader import load_model
 
@@ -42,19 +42,20 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--model", required=True)
     p.add_argument("--steps", type=int, default=50)
+    p.add_argument("--fp32", action="store_true")
     args = p.parse_args()
 
-    dev = "cuda"
-    model, cfg = load_model(args.model, device=dev)
+    dev, dtype = pick_device(args.fp32)    
+    model, cfg = load_model(args.model, device=dev, dtype=dtype)
     head_dim = cfg.hidden_size // cfg.num_attention_heads
 
     slab = KVSlab(cfg.num_hidden_layers, 256, BLOCK,
-                  cfg.num_key_value_heads, head_dim, device=dev)
+                  cfg.num_key_value_heads, head_dim, device=dev, dtype=dtype)
 
     from transformers import AutoTokenizer, AutoModelForCausalLM
     tok = AutoTokenizer.from_pretrained(args.model)
     hf = AutoModelForCausalLM.from_pretrained(
-        args.model, dtype=torch.float16, device_map=dev).eval()
+        args.model, dtype=dtype, device_map=dev).eval()
 
     prompts = [
         "The capital of France is",
