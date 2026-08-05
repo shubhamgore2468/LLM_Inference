@@ -63,7 +63,6 @@ class Attention(nn.Module):
         self.n_q = cfg.num_attention_heads
         self.n_kv = cfg.num_key_value_heads
         self.d = cfg.hidden_size // cfg.num_attention_heads
-        self.scale = self.d ** -0.5
 
         h = cfg.hidden_size
         self.q_proj = nn.Linear(h, self.n_q * self.d, bias=True)
@@ -81,7 +80,7 @@ class Attention(nn.Module):
         q = rope.apply(q, pos)
         k = rope.apply(k, pos)
 
-        o = paged_attention(q * self.scale, k, v, slab, self.layer_idx,
+        o = paged_attention(q, k, v, slab, self.layer_idx,
                             plan, self.n_q, self.n_kv)
         return self.o_proj(o.reshape(T, -1))
 
