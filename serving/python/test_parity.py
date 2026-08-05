@@ -43,6 +43,7 @@ def main():
     p.add_argument("--model", required=True)
     p.add_argument("--steps", type=int, default=50)
     p.add_argument("--fp32", action="store_true")
+    p.add_argument("--debug", action="store_true")
     args = p.parse_args()
 
     dev, dtype = pick_device(args.fp32)    
@@ -92,13 +93,23 @@ def main():
         with torch.no_grad():
             plan = make_plan(seq, blocks, 0, dev)
             h = model(plan, slab)
-            nxt = model.logits(h[-1]).argmax().item()
+            mine_logits = model.logits(h[-1])
+            nxt = mine_logits.argmax().item()
+            if args.debug:
+                ref_logits = hf(torch.tensor([seq], device=dev)).logits[0, -1]
+                d = (mine_logits.float() - ref_logits.float()).abs().max().item()
+                print(f"    step 0  max|Δ|={d:.4f}")
             seq.append(nxt)
 
-            for _ in range(args.steps - 1):
+            for step in range(args.steps - 1):
                 plan = make_plan(seq, blocks, len(seq) - 1, dev)
                 h = model(plan, slab)
-                nxt = model.logits(h[-1]).argmax().item()
+                mine_logits = model.logits(h[-1])
+                nxt = mine_logits.argmax().item()
+                if args.debug:
+                    ref_logits = hf(torch.tensor([seq], device=dev)).logits[0, -1]
+                    d = (mine_logits.float() - ref_logits.float()).abs().max().item()
+                    print(f"    step {step + 1}  max|Δ|={d:.4f}")
                 seq.append(nxt)
 
         ref = hf.generate(torch.tensor([ids], device=dev),
