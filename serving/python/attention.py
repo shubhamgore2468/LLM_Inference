@@ -95,7 +95,7 @@ def _prefill(queries, kv_slab, layer_idx, batch_plan, head_repeat_factor):
         causal_offset = num_key_tokens - num_query_tokens
         query_indices = torch.arange(num_query_tokens, device=queries.device).unsqueeze(1) + causal_offset
         key_indices = torch.arange(num_key_tokens, device=queries.device).unsqueeze(0)
-        attention_mask = (key_indices <= query_indices)
+        attention_mask = (key_indices <= query_indices).unsqueeze(0).unsqueeze(0)
 
         computed_attention = F.scaled_dot_product_attention(
                 query_slice, key_slice, value_slice, attn_mask=attention_mask
