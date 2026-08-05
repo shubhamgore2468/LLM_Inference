@@ -83,9 +83,9 @@ def _prefill(queries, kv_slab, layer_idx, batch_plan, head_repeat_factor):
         values = _expand_kv(values, head_repeat_factor)
 
         #Prepare shaped for SDPA: (batch=1, heas, seq_len, head_dim)
-        query_slice = queries[q_start:q_end].transpose(0, 1).unsqueeze(0)
-        key_slice = keys.transpose(0, 1).unsqueeze(0)
-        value_slice = values.transpose(0, 1).unsqueeze(0)
+        query_slice = queries[q_start:q_end].permute(1, 0, 2).unsqueeze(0)
+        key_slice = keys.permute(1, 0, 2).unsqueeze(0)
+        value_slice = values.permute(1, 0, 2).unsqueeze(0)
 
         #The prefix-cache: we compute num_query_tokens queries but atten over num_key_tokens
         #keys, where num_key_tokens >= num_query_tokens because a cache hit 
