@@ -10,17 +10,22 @@ def pick_device(force_fp32=False):
         return "mps", torch.float32 if force_fp32 else torch.float16
     return "cpu", torch.float32
 
-DEVICE, DTYPE = pick_device()
-
-print(DEVICE, DTYPE)
-
-model_name = "Qwen/Qwen2.5-0.5B-Instruct"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(model_name, dtype=DTYPE).to(DEVICE)
-model.eval()
-
+DEVICE = DTYPE = tokenizer = model = None
 app = FastAPI()
 lock = threading.Lock()
+
+def _load_model():
+    global DEVICE, DTYPE, tokenizer, model
+    DEVICE, DTYPE = pick_device()
+    print(DEVICE, DTYPE)
+    model_name = "Qwen/Qwen2.5-0.5B-Instruct"
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(model_name, dtype=DTYPE).to(DEVICE)
+    model.eval()
+
+@app.on_event("startup")
+def _startup():
+    _load_model()
 
 @app.post("/v1/chat/completions")
 async def chat(req: dict):
