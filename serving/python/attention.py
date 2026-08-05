@@ -112,7 +112,7 @@ def _decode(queries, kv_slab, layer_idx, batch_plan, head_repeat_factor):
     context_lengths = batch_plan["context_lens"]
     bsz = block_tables.shape[0]
 
-    keys_gathered, values_gathered = kv_slab.gather(layer_idx, block_tables, context_lengths)
+    keys_gathered, values_gathered = kv_slab.gather(layer_idx, block_tables)
 
     max_history_length = keys_gathered.shape[1]
 
