@@ -97,7 +97,10 @@ def main():
 
     # ------------ test 4: preemption -------------
 
-    e = Engine(args.model, dtype=dtype, kv_gb=2.0, max_kv_utilization=0.5)
+    # A tiny pool so 3 short sequences actually create memory pressure —
+    # kv_gb=2.0 (used elsewhere) gives ~87k tokens of headroom, thousands of
+    # times more than these sequences need, so the watermark would never trip.
+    e = Engine(args.model, dtype=dtype, kv_gb=0.005, max_kv_utilization=0.5)
 
     sids = [e.add(i, max_tokens=32, ignore_eos=True) for i in ids]
 
