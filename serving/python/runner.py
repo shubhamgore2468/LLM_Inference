@@ -49,6 +49,8 @@ class Engine:
         self.bm = ks.BlockManager(n_blocks, block_size)
 
         self.sched = ks.Scheduler(self.bm, cfg)
+        self._step_count = 0
+        self._stall_count = 0
 
         print(f"[engine] {n_blocks} blocks x {block_size} tok "
               f"= {n_blocks * block_size:,} tokens "
@@ -90,15 +92,27 @@ class Engine:
 
 
     @torch.no_grad()
-
-    @torch.no_grad()
-    def step(self) -> List[Tuple[int, int]]:
+    def step(self, verbose=True) -> List[Tuple[int, int]]:
         """Executes one iteration of inference. Returns a list of (sequence_id, new_token_id)."""
-        
+
         plan = self.sched.step() # Fetch the next batch plan
-        
+        self._step_count += 1
+
         if plan.n_seqs() == 0:
+            self._stall_count += 1
+            if verbose and self._stall_count % 100 == 0:
+                st = self.stats()
+                print(f"[engine] stalled {self._stall_count}x: "
+                      f"waiting={st.waiting} running={st.running} "
+                      f"kv_util={st.kv_util:.2%} (no GPU work this call)")
             return []
+
+        if verbose and self._step_count % 20 == 0:
+            st = self.stats()
+            print(f"[engine] step={self._step_count} "
+                  f"n_seqs={plan.n_seqs()} is_prefill={plan.is_prefill} "
+                  f"running={st.running} waiting={st.waiting} "
+                  f"kv_util={st.kv_util:.2%}")
 
         model_inputs = self._prepare_torch_inputs(plan)
 
