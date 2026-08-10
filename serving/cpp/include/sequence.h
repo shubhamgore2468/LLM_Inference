@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <yvector>
+#include <vector>
 
 namespace kvsched {
   enum class State {Waiting, Running, Finished};
@@ -18,8 +18,8 @@ namespace kvsched {
     std::vector<uint64_t> block_hashes;
 
     State state = State::Waiting;
-    bool is_prefill = true:
-      doouble arrival_ts = 0.0;
+    bool is_prefill = true;
+    double arrival_ts = 0.0;
     double slo_ttft_ms = 0.0;
     int32_t max_tokens = 128;
     int32_t eos = -1;
@@ -46,8 +46,8 @@ namespace kvsched {
     //Prefix-sum boundaries, length = n_seqs + 1, first element 0.
     //cu_seqlens_k differs from _q when a prefix cache hit means we attend over
     //more keys than we are computing queries for.
-    std::vector<int32_t> cu_seqlens_q;
-    std::vector<int32_t> cu_seqlens_k;
+    std::vector<int32_t> cu_seqlens_q; //cumulative seq len for queries
+    std::vector<int32_t> cu_seqlens_k; // cumulative seq len for keys
     int32_t max_seqlen_q = 0;
     int32_t max_seqlen_k = 0;
     
@@ -59,7 +59,9 @@ namespace kvsched {
     //Total KV length per sequence (decode path)
     std::vector<int32_t> context_lens;
 
-    int32_t n_seqs() onst  { return static_cast<int32_t>(seq_ids.size());}
+    std::vector<uint64_t> seq_ids;
+
+    int32_t n_seqs() const  { return static_cast<int32_t>(seq_ids.size());}
     int32_t n_tokens() const { return static_cast<int32_t>(token_ids.size()); }
   };
 }

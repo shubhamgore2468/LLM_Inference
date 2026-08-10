@@ -114,7 +114,10 @@ def main():
 
         ref = hf.generate(torch.tensor([ids], device=dev),
                           max_new_tokens=args.steps, do_sample=False,
+                          repetition_penalty=1.0,
+                          attention_mask=torch.ones(1, len(ids), dtype=torch.long, device=dev),
                           pad_token_id=tok.eos_token_id)[0].tolist()
+
 
         mine_out, ref_out = seq[len(ids):], ref[len(ids):]
         if mine_out == ref_out:
