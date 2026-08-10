@@ -141,7 +141,7 @@ namespace kvsched {
 
     for (Sequence * s: running_) { // iterate running queue
 
-      if ( !s->is_prefill) continue; 
+      if ( s->is_prefill) continue;
 
       if(static_cast<int32_t>(batch.size()) >= cfg_.max_batch_seqs) break;
 
@@ -176,8 +176,8 @@ namespace kvsched {
     // ----- 3. continue in-flight prefilss, then admit new ones as decodes done
     //
     for ( Sequence * s: running_) {
-      
-      if(s->is_prefill) continue;
+
+      if(!s->is_prefill) continue;
 
       if(static_cast<int32_t>(batch.size()) >= cfg_.max_batch_seqs) break;
 
