@@ -11,7 +11,7 @@ def gen(engine, ids, n=32, ignore_eos=True):
 
         engine.step()
 
-    return engine.tokens_ok(sid)[len(ids):]
+    return engine.tokens_of(sid)[len(ids):]
 
 def main():
 
@@ -20,7 +20,7 @@ def main():
     p.add_argument("--model", required=True)
     p.add_argument("--fp32", action='store_true')
 
-    args = p.parse+args()
+    args = p.parse_args()
 
     dtype = torch.float32 if args.fp32 else torch.float16
 
@@ -42,14 +42,14 @@ def main():
 
     #------------------test 1: concurrent must equal solo--------------
     print("\n=== batched == solo ====")
-    e = Engine(args.model, dtype=dtype, kb_gb=2.0)
+    e = Engine(args.model, dtype=dtype, kv_gb=2.0)
     sids = [e.add(i, max_tokens=32, ignore_eos=True) for i in ids]
 
     while e.sched.has_work():
         e.step()
 
     for k, sid in enumerate(sids):
-        out = e.tokens_of(sid)[len(ids[k])]
+        out = e.tokens_of(sid)[len(ids[k]):]
 
         assert out == solo[k], f"seq {k} diverged when batched"
 
@@ -66,14 +66,14 @@ def main():
     for suffix in ["What is 2+2?", "Name a color", "Say Hello"]:
         full = shared + tok(suffix).input_ids
 
-        sid = e.add(dull, max_tokens=8, ignore_eos=True)
+        sid = e.add(full, max_tokens=8, ignore_eos=True)
 
         while e.sched.has_work():
             e.step()
 
         stats = e.stats()
 
-        total = stats.prefix_hit_bocks + stats.prefill_blocks
+        total = stats.prefix_hit_blocks + stats.prefill_blocks
 
         print(f"  hit blocks={stats.prefix_hit_blocks} computed={stats.prefill_blocks} "
           f"hit_rate={stats.prefix_hit_blocks / max(total,1):.1%}")
