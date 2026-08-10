@@ -63,7 +63,7 @@ def main():
     e = Engine(args.model, dtype=dtype, kv_gb=2.0)
     shared = tok("You are a helpful assistant. " * 40).input_ids
 
-    for suffix in ["What is 2+2?", "Name a color", "Say Hello"]:
+    for i, suffix in enumerate(["What is 2+2?", "Name a color", "Say Hello"]):
         full = shared + tok(suffix).input_ids
 
         sid = e.add(full, max_tokens=8, ignore_eos=True)
@@ -77,8 +77,11 @@ def main():
 
         print(f"  hit blocks={stats.prefix_hit_blocks} computed={stats.prefill_blocks} "
           f"hit_rate={stats.prefix_hit_blocks / max(total,1):.1%}")
-        
-        assert stats.prefix_hit_blocks > 0, "no prefix reuse — check seal_blocks / hash chain"
+
+        # First request populates the cache — 0 hits is correct there.
+        # Only 2nd/3rd requests, sharing the same prefix, should hit.
+        if i > 0:
+            assert stats.prefix_hit_blocks > 0, "no prefix reuse — check seal_blocks / hash chain"
  
     #------------test 3: chunked prefill ------
 
