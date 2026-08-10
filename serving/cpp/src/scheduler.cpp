@@ -318,7 +318,9 @@ namespace kvsched {
         seal_blocks(s);
         continue;
       }
-      
+
+      seal_blocks(s); // seal any remaining full blocks from the completing prefill chunk
+
       s.is_prefill = false;
       s.tokens.push_back(next_tokens[i]);
       s.n_cached = s.n_tokens() - 1; //the new tokens KV not updated 

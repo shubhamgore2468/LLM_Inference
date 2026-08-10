@@ -24,6 +24,8 @@ venv/
 # =========================
 build/
 **/build/
+build-*/
+**/build-*/
 
 CMakeCache.txt
 CMakeFiles/
