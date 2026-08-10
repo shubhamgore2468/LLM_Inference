@@ -351,6 +351,9 @@ namespace kvsched {
   void Scheduler::preempt(size_t idx) {
     Sequence& s = *running_[idx];
     release(s);
+    s.block_table.clear();
+    s.block_hashes.clear();
+    s.tokens.resize(static_cast<size_t>(s.n_prompt)); // drop generated tokens — redo from the prompt
     s.n_cached = 0;
     s.is_prefill = true;
     s.state = State::Waiting;
