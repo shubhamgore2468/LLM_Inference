@@ -33,8 +33,10 @@ class GenRequest(BaseModel):
 def _encode(req: GenRequest):
     if req.messages:
         ids = TOK.apply_chat_template(req.messages, add_generation_prompt=True, tokenize=True)
-        return ids["input_ids"] if isinstance(ids, dict) else ids
-    return TOK(req.prompt or "").input_ids
+        if isinstance(ids, dict):
+            ids = ids["input_ids"]
+        return list(ids)
+    return list(TOK(req.prompt or "").input_ids)
 
 async def _token_stream(ids, req: GenRequest):
     """ Yield (delta_text, n_tokens) per engine event."""
