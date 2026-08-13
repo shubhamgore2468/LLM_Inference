@@ -1,4 +1,5 @@
 import threading, json, torch, asyncio
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from transformers import AutoTokenizer, AutoModelForCausalLM, TextIteratorStreamer
@@ -11,7 +12,6 @@ def pick_device(force_fp32=False):
     return "cpu", torch.float32
 
 DEVICE = DTYPE = tokenizer = model = None
-app = FastAPI()
 lock = threading.Lock()
 
 def _load_model():
@@ -23,9 +23,12 @@ def _load_model():
     model = AutoModelForCausalLM.from_pretrained(model_name, dtype=DTYPE).to(DEVICE)
     model.eval()
 
-@app.on_event("startup")
-def _startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     _load_model()
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 @app.post("/v1/chat/completions")
 async def chat(req: dict):
@@ -43,7 +46,7 @@ async def chat(req: dict):
     def run_generation():
         try:
             with lock:
-                model.generate( **ids, streamer=st, max_new_tokens=n, do_sample=False)
+                model.generate(ids, streamer=st, max_new_tokens=n, do_sample=False)
         finally:
             st.end()
     threading.Thread(target=run_generation, daemon=True).start()
