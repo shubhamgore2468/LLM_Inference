@@ -33,7 +33,7 @@ class GenRequest(BaseModel):
 def _encode(req: GenRequest):
     if req.messages:
         ids = TOK.apply_chat_template(req.messages, add_generation_prompt=True, tokenize=True)
-        if isinstance(ids, dict):
+        if hasattr(ids, "keys"):
             ids = ids["input_ids"]
         return list(ids)
     return list(TOK(req.prompt or "").input_ids)
